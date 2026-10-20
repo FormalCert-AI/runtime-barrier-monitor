@@ -14,13 +14,10 @@ def _wealth(factors):
 
 
 def direct(B):
-    """lambda_k = 1 / B_k, i.e. M_k = B_k / B_0."""
     return _wealth(1.0 + np.diff(B, axis=1) / np.maximum(B[:, :-1], EPS))
 
 
 def dab(B, gamma=GAMMA, cap=CAP):
-    """DAB: lambda_k = min(max(S_k / (Q_k + EPS), 0), cap, 1 / B_k), with S_k and Q_k the discounted sums of past
-    increments and of their squares."""
     R, K1 = B.shape
     lam = np.empty((R, K1 - 1))
     S, Q = np.zeros(R), np.zeros(R)
@@ -33,19 +30,16 @@ def dab(B, gamma=GAMMA, cap=CAP):
 
 
 def fraction_mixture(B, fractions=FRACTIONS):
-    """Equal-weight mixture of lambda_k = c / B_k, c in fractions."""
     relative = np.diff(B, axis=1) / np.maximum(B[:, :-1], EPS)
     return np.mean([_wealth(1.0 + c * relative) for c in fractions], axis=0)
 
 
 def absolute_mixture(B, betas):
-    """Equal-weight mixture of lambda_k = min(beta, 1 / B_k), beta in betas."""
     d, largest = np.diff(B, axis=1), 1.0 / np.maximum(B[:, :-1], EPS)
     return np.mean([_wealth(1.0 + np.minimum(beta, largest) * d) for beta in betas], axis=0)
 
 
 def alarm_times(M, a=1.0, alpha=ALPHA):
-    """First k >= 1 with M_k >= a^(K - k) / alpha (K = M.shape[1] - 1); K + 1 if there is none."""
     horizon = M.shape[1] - 1
     cross = M >= a ** (horizon - np.arange(horizon + 1)) / alpha
     cross[:, 0] = False

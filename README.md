@@ -1,46 +1,76 @@
 # Anytime-Valid Runtime Monitoring of Learned Barrier Certificates
 
-This repository releases the code for the paper, to support reproduction of its experiments. The code is directly
-runnable after installing the packages in `requirements.txt` (`pip install -r requirements.txt`). Run every command
-from the repository root.
+Code for the paper *Anytime-Valid Runtime Monitoring of Learned Barrier Certificates*.
 
-## Repo Structure
+Run commands from the repository root with Python 3.12:
 
-- [`simulate.py`](simulate.py): runs all experiments once and stores the results in `results/`
-  (`python simulate.py`). Every script below reads these results.
-- [`rq1`](rq1), [`rq2`](rq2), [`rq3`](rq3): the research questions of Section 4.
-  - [`rq1/table1.py`](rq1/table1.py): Table 1, valid certificates.
-  - [`rq2/table1.py`](rq2/table1.py): Table 1, invalid certificates.
-  - [`rq3/fig2_evidence.py`](rq3/fig2_evidence.py): Figure 2.
-- [`practical_application`](practical_application): Section 4.4.
-  - [`results.py`](practical_application/results.py): alarm rates before and after retraining, and alarms before the exit.
-- [`appendix`](appendix): Appendices A and B.
-  - [`counterexample_system2_input.py`](appendix/counterexample_system2_input.py),
-    [`counterexample_system3.py`](appendix/counterexample_system3.py): the counterexamples of Appendix A.
-  - [`fig3_alarm_rates.py`](appendix/fig3_alarm_rates.py), [`fig4_factor_a.py`](appendix/fig4_factor_a.py),
-    [`fig5_b0.py`](appendix/fig5_b0.py), [`fig6_baselines.py`](appendix/fig6_baselines.py) (also Table 3),
-    [`fig7_sensitivity.py`](appendix/fig7_sensitivity.py): Figures 3 to 7.
-- [`synthesis`](synthesis): how the models were obtained.
-  - [`system2_sos.m`](synthesis/system2_sos.m): SOS certificate of System 2 (MATLAB, YALMIP, MOSEK).
-  - [`train_system3.py`](synthesis/train_system3.py): policy and barrier of System 3.
-  - [`retrain_system2_input.py`](synthesis/retrain_system2_input.py),
-    [`retrain_system3.py`](synthesis/retrain_system3.py): retraining from monitored episodes (Section 4.4).
-- [`models`](models): the certificates, barriers and policies used in the paper.
-- [`core`](core): systems, monitors, simulation and metrics shared by all scripts.
-- [`plotting`](plotting): figure style.
+```sh
+pip install -r requirements.txt
+```
 
-Scripts are run as modules, e.g. `python -m rq1.table1`. Tables are printed and figures are written to
-`results/figures/`. For the results, please refer to the paper.
+## Experiments
 
-## Contributions
+```sh
+python simulate.py
+```
 
-We welcome pull requests. Please describe what the change does and why; for larger changes, please open an issue
-first.
+This computes the six experiments in `core/experiments.py` and saves `results/<experiment>.npz`.
+Existing caches are reused when their recorded settings match. Individual experiments can be selected with
+`python simulate.py system1 system3`.
 
-## Getting in Touch
+The following commands use these caches. If a cache is missing or its recorded settings differ, the command
+computes that experiment before producing the output.
 
-For questions, bug reports or feature requests, please open an issue.
+| Output | Command |
+| --- | --- |
+| Table 1, valid certificates | `python -m rq1.table1` |
+| Table 1, invalid certificates | `python -m rq2.table1` |
+| Section 4.4 statistics | `python -m practical_application.results` |
+| Figure 3 | `python -m appendix.fig3_alarm_rates` |
+| Figure 4 | `python -m appendix.fig4_factor_a` |
+| Figure 5 | `python -m appendix.fig5_b0` |
+| Table 3 and Figure 6 | `python -m appendix.fig6_baselines` |
+| Figure 7 | `python -m appendix.fig7_sensitivity` |
+
+Tables are printed to the terminal; figures are saved in `results/figures/`.
+
+`python -m rq3.fig2_evidence` simulates separate example trajectories for Figure 2.
+`python -m appendix.counterexample_system2_input` and `python -m appendix.counterexample_system3`
+compute the counterexamples in Appendix A directly from the model files.
+
+## Models
+
+Evaluation uses the files in `models/`:
+
+| File | Experiment |
+| --- | --- |
+| `system2_sos.json` | System 2 and System 2+input: SOS barrier |
+| `system3.npz` | System 3: original policy and barrier |
+| `system2_input_retrained.npz` | System 2+input: retrained barrier |
+| `system3_retrained.npz` | System 3: retrained policy and barrier |
+
+System 1 uses `B(x) = x^2` directly.
+
+`python -m synthesis.train_system3`, `python -m synthesis.retrain_system2_input`, and
+`python -m synthesis.retrain_system3` run training and write weights to `results/synthesis/`.
+To evaluate newly trained weights, copy them to the corresponding file in `models/` and remove the affected
+experiment cache. `synthesis/system2_sos.m` writes the SOS barrier to `results/synthesis/system2_sos.json`;
+it requires MATLAB, YALMIP, and MOSEK, with their paths set in the script.
+
+## Settings
+
+Defaults in `core/config.py`: 1,000 initial states, 1,000 runs per state, `K_MAX=400`, `ALPHA=0.05`,
+`K_MAX ln a=4`, `GAMMA=0.92`, `CAP=100`, and seed `2026`. The horizon sweep uses `a=1`.
+Alarm rates count alarms at or before the earlier of the first exit and the horizon. Pre-exit alarm rates count alarms
+strictly before the first exit, among runs that exit within the horizon.
 
 ## Citation
 
-The citation will be added after publication.
+```bibtex
+@unpublished{cao2026anytime,
+  title  = {Anytime-Valid Runtime Monitoring of Learned Barrier Certificates},
+  author = {Cao, Zhipeng and Wu, Taoran and Cui, Weiru and Ong, Luke and Xue, Bai},
+  year   = {2026},
+  note   = {Manuscript}
+}
+```

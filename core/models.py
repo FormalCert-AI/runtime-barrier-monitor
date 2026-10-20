@@ -5,13 +5,10 @@ import numpy as np
 
 
 def quadratic(X):
-    """System 1: B(x) = x^2."""
     return X[:, 0] ** 2
 
 
 class PolynomialBarrier:
-    """B(x) = sum_m coef_m prod_j x_j^expo_mj (JSON written by synthesis/system2_sos.m)."""
-
     def __init__(self, path):
         with open(path) as f:
             cert = json.load(f)
@@ -27,8 +24,6 @@ class PolynomialBarrier:
 
 
 class MLP:
-    """numpy forward pass of nn.Sequential(Linear, Tanh, Linear, Tanh, Linear), weights '<prefix>_net.<i>.*'."""
-
     def __init__(self, weights, prefix):
         self.layers = [(weights[f'{prefix}_net.{i}.weight'], weights[f'{prefix}_net.{i}.bias']) for i in (0, 2, 4)]
 
@@ -44,8 +39,6 @@ def _weights(source):
 
 
 class NeuralBarrier:
-    """B(x) = floor + softplus(MLP(x)); floor stored as 'B_eps' (0 if absent)."""
-
     def __init__(self, source):
         weights = _weights(source)
         self.net = MLP(weights, 'B')
@@ -56,8 +49,6 @@ class NeuralBarrier:
 
 
 class NeuralPolicy:
-    """u(x) = u_max tanh(MLP(x))."""
-
     def __init__(self, source, u_max=1.5):
         self.net = MLP(_weights(source), 'pi')
         self.u_max = u_max

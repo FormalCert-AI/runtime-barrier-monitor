@@ -21,7 +21,6 @@ plt.rcParams.update({
 
 
 def legend_below(fig, handles, ncol=None, gap=LEGEND_GAP, **kwargs):
-    """One legend row centred under the panels."""
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     lowest = min(ax.get_tightbbox(renderer).y0 for ax in fig.axes) / fig.dpi
@@ -32,7 +31,6 @@ def legend_below(fig, handles, ncol=None, gap=LEGEND_GAP, **kwargs):
 
 
 def save(fig, name):
-    """results/figures/<name>.pdf and .png"""
     folder = os.path.join(RESULTS, 'figures')
     os.makedirs(folder, exist_ok=True)
     for ext in ('pdf', 'png'):

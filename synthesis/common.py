@@ -11,7 +11,6 @@ OUT = os.path.join(RESULTS, 'synthesis')
 
 
 def mlp(hidden):
-    """2 -> hidden -> hidden -> 1, tanh."""
     return nn.Sequential(nn.Linear(2, hidden), nn.Tanh(), nn.Linear(hidden, hidden), nn.Tanh(), nn.Linear(hidden, 1))
 
 
@@ -20,7 +19,6 @@ def load(net, weights, prefix):
 
 
 def weights(barrier_net=None, policy_net=None, floor=None):
-    """Arrays in the format of models/*.npz: 'B_net.*', 'pi_net.*', 'B_eps'."""
     out = {}
     for prefix, net in (('B', barrier_net), ('pi', policy_net)):
         if net is not None:
@@ -31,7 +29,6 @@ def weights(barrier_net=None, policy_net=None, floor=None):
 
 
 def augmented_lagrangian(g, nu, rho):
-    """Penalty of g <= 0 with multipliers nu: mean of (max(nu + rho g, 0)^2 - nu^2) / (2 rho)."""
     return ((torch.clamp(nu + rho * g, min=0) ** 2 - nu ** 2) / (2 * rho)).mean()
 
 

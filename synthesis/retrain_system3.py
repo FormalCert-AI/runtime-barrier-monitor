@@ -30,7 +30,6 @@ def closed_loop(W):
 
 
 def collect(W, rng):
-    """Transitions (x, u, x+) of the dithered episodes."""
     system, barrier = closed_loop(W)
     X, U, X_next, n_alarm, n_exit = [], [], [], 0, 0
     for x0 in system.sample_initial(N_INIT, rng):
@@ -85,8 +84,6 @@ def fit_model(X, U, X_next):
 
 
 class LearnedSystem(System3):
-    """System 3 with f_hat in place of the dynamics."""
-
     def __init__(self, policy, net, sigma):
         super().__init__(policy)
         self.net, self.sigma = net, sigma
@@ -175,7 +172,6 @@ def resynthesise(start, net, sigma, rounds=(6000, 3000, 3000, 3000), lr=1e-3, fl
 
 
 def stopping_rates(W, rng=None):
-    """DAB alarm rates p_hat_i (default rule, stop at exit) on runs with their own seed."""
     rng = rng or np.random.default_rng([SEED, 3])
     system, barrier = closed_loop(W)
     rates = []

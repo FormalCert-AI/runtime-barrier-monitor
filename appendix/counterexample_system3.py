@@ -17,13 +17,11 @@ def load(prefix, weights):
 
 
 def tanh(v):
-    """Interval enclosure of tanh on the interval v (tanh is increasing; tanh(t) = 1 - 2 / (exp(2t) + 1))."""
     at = lambda t: 1 - 2 / (iv.exp(2 * iv.mpf(t)) + 1)                     # noqa: E731
     return iv.mpf([at(v.a).a, at(v.b).b])
 
 
 def network(layers, z):
-    """Interval enclosure of the network output for the interval inputs z (tanh hidden layers, linear output)."""
     for i, (W, b) in enumerate(layers):
         z = [sum((w * zj for w, zj in zip(row, z)), bias) for row, bias in zip(W, b)]
         if i < len(layers) - 1:
@@ -36,7 +34,6 @@ def softplus(v):
 
 
 def inside_S(z1, z2):
-    """Sound check that the whole box z1 x z2 lies in S (inside X and away from the three obstacles)."""
     in_X = z1.a >= -3.5 and z1.b <= 2 and z2.a >= -2 and z2.b <= 1
     off_boxes = z2.b < 0.1                                # both box obstacles have x2 >= 0.1
     off_disk = ((z1 + 1) ** 2 + (z2 + 1) ** 2).a > iv.mpf('0.16').b

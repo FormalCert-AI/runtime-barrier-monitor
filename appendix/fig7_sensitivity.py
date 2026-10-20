@@ -21,7 +21,6 @@ HALF_WIDTH, OFFSET = 0.42, 0.16
 
 
 def column_rates(results, monitor, column):
-    """p_hat_i, one row per value on the x-axis; Direct has no gamma or U."""
     if column == 'horizon':
         return results['horizon_rate'][list(MONITORS).index(monitor)]
     if monitor == 'direct':

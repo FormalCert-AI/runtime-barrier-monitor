@@ -12,9 +12,6 @@ MIXTURES = {'fraction': fraction_mixture,
 
 
 def rollouts(system, barrier, x0, R, rng, record=False, extension=None):
-    """R runs from x0, stopped at the first exit from S (B = 1 from then on).
-    With extension = (rng2, K), the runs continue from K_MAX to K with noise from rng2.
-    Returns B (R x (K+1)), the exit steps T (K + 1 if none) and, if record, the states."""
     horizon = K_MAX if extension is None else extension[1]
     X = np.repeat(np.asarray(x0, float)[None], R, 0)
     B, T, alive = np.empty((R, horizon + 1)), np.full(R, horizon + 1), np.ones(R, bool)
@@ -34,20 +31,10 @@ def rollouts(system, barrier, x0, R, rng, record=False, extension=None):
 
 
 def _rate(M, a, T, horizon=K_MAX):
-    """Share of runs with an alarm by min(first exit, horizon), where monitoring stops."""
     return (alarm_times(M[:, :horizon + 1], a) <= np.minimum(T, horizon)).mean()
 
 
 def evaluate(system, barrier, N, R, rng, extension_rng, run_rng=None):
-    """N initial states (from rng) and R runs from each (from run_rng, default rng).
-    Each run is monitored until its first exit from S or the horizon (Remark 3).
-
-    alarm_rate[m, j, i]  p_hat_i of monitor m (Direct, DAB) for K_max ln a = KMAX_LN_A[j]
-    caught[m, j]         runs exiting by K_MAX with an alarm strictly before the first exit
-    mixture_rate[b, i]   p_hat_i of the fixed-bet mixtures (default a)
-    logm_hist[m, s]      histogram of log10 M_k at k = LOGM_STEPS[s] over the runs still monitored at k
-    horizon_rate[m, h, i] p_hat_i for K_max = HORIZONS[h] with a = 1, so that only the horizon changes
-    gamma_rate[g, i], cap_rate[u, i]  p_hat_i of DAB for SENS_GAMMA[g], SENS_CAP[u] (default a)"""
     X0 = system.sample_initial(N, rng)
     rng = run_rng or rng
     n_m, n_a = len(MONITORS), len(A_VALUES)
@@ -83,7 +70,6 @@ def evaluate(system, barrier, N, R, rng, extension_rng, run_rng=None):
 
 
 def visited_states(system, n_init, R, rng):
-    """States visited by R runs from each of n_init initial states, and the share of runs that stay in S."""
     states, n_exit = [], 0
     for x0 in system.sample_initial(n_init, rng):
         X, alive = np.repeat(x0[None], R, 0), np.ones(R, bool)
@@ -101,7 +87,6 @@ def visited_states(system, n_init, R, rng):
 
 
 def expected_barrier(system, barrier, X, k=0):
-    """E[B(x+) | x] by quadrature over the noise, with B = 1 outside S."""
     total = 0
     for weight, X_next in system.successors(X, k):
         total = total + weight * np.where(system.inside(X_next), barrier(X_next), 1.0)

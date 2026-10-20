@@ -19,7 +19,6 @@ N_GROUPS = 8
 
 
 def grouped(b0, p):
-    """Per group: median B(x0), mean p_hat_i (%) and half-width of its 95% CI."""
     out = []
     for group in np.array_split(np.argsort(b0), N_GROUPS):
         v = 100 * p[group]

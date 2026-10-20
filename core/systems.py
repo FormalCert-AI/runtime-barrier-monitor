@@ -5,13 +5,11 @@ GAUSS_NODES = 12
 
 
 def _gauss_legendre(n=GAUSS_NODES):
-    """Nodes on [-1, 1] and weights of U[-1, 1]."""
     u, w = np.polynomial.legendre.leggauss(n)
     return u, w / 2
 
 
 class System1:
-    """x+ = (0.5 + 1.5 xi) x (1 - x^2), xi ~ U[-1, 1]; S = (-1, 1)."""
     dim = 1
 
     def sample_initial(self, n, rng):
@@ -26,9 +24,6 @@ class System1:
 
 
 class System2:
-    """Van der Pol oscillator (Wu et al. 2024); with input_start, the input b_k ~ U[0, 0.45] enters x2 from that step on.
-        x1+ = x1 - 0.02 x2,
-        x2+ = x2 + 0.01 ((0.8 + xi) x1 + 10 (x1^2 - 0.21) x2 + b_k),   xi ~ U[-0.1, 0.1];   S = {|x| <= 1}."""
     dim = 2
 
     def __init__(self, x0_radius=0.1, input_start=None, input_range=(0.0, 0.45)):
@@ -70,10 +65,6 @@ class System2:
 
 
 class System3:
-    """Polynomial oscillator with a neural policy u = pi(x), |u| <= 1.5:
-        x+ = x + 0.1 [x2; x1^3/3 - x1 - x2 + u] + 0.01 xi,   xi ~ U([-1, 1]^2);
-    S = X \\ D, X = [-3.5, 2] x [-2, 1], D = B((-1, -1), 0.4) U [0.4, 0.6] x [0.1, 0.5] U [0.4, 0.8] x [0.1, 0.3];
-    X0 = B((1.5, 0), 0.5) U [-1.8, -1.4] x [-0.1, 0.1] U [-1.4, -1.2] x [-0.5, 0.1]."""
     dim = 2
     X0_DISK, X0_RADIUS, X0_BOX1 = (1.5, 0.0), 0.5, (-1.8, -1.4)
 
@@ -115,7 +106,6 @@ class System3:
 
     @classmethod
     def sample_unsafe(cls, n, rng):
-        """Samples of the obstacles and of a 0.3-wide band around X."""
         X = np.stack([rng.uniform(-3.8, 2.3, 6 * n), rng.uniform(-2.3, 1.3, 6 * n)], 1)
         return X[~cls.inside(X)][:n]
 

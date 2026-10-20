@@ -7,29 +7,24 @@ from .simulate import MIXTURES, MONITORS
 
 
 def rho(p):
-    """Share of initial states with p_hat_i > alpha."""
     return 100 * np.mean(p > ALPHA)
 
 
 def p_max(p):
-    """Maximum empirical alarm rate over the sampled initial states."""
     return 100 * p.max()
 
 
 def rates(results, monitor, kmax_ln_a=KMAX_LN_A[DEFAULT_INDEX]):
-    """p_hat_i of a monitor: 'direct' or 'dab' at any K_max ln a, or a mixture at the default."""
     if monitor in MIXTURES:
         return results['mixture_rate'][list(MIXTURES).index(monitor)]
     return results['alarm_rate'][list(MONITORS).index(monitor), list(KMAX_LN_A).index(kmax_ln_a)]
 
 
 def stay_rate(results):
-    """Share of sampled runs that stay in S through K_max."""
     return 100 * (1 - results['n_exit'].sum() / (results['N'] * results['R']))
 
 
 def pre_exit_alarm_rate(results, monitor, kmax_ln_a=KMAX_LN_A[DEFAULT_INDEX]):
-    """Among runs exiting by K_max, the share with an alarm strictly before the first exit."""
     n_exit = results['n_exit'].sum()
     if n_exit == 0:
         return np.nan
@@ -38,7 +33,6 @@ def pre_exit_alarm_rate(results, monitor, kmax_ln_a=KMAX_LN_A[DEFAULT_INDEX]):
 
 
 def table1(systems):
-    """Rows of Table 1: rho_alpha and p_max of Direct and DAB for K_max ln a = 0 and the default."""
     rows = []
     for name, label in systems:
         results = run(name)

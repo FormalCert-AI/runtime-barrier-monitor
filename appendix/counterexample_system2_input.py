@@ -14,7 +14,6 @@ X = (Fraction(-7, 100), Fraction(3, 10))                  # the counterexample s
 
 
 def barrier():
-    """B as a sympy polynomial with exact rational coefficients (the decimals of the JSON file)."""
     with open(os.path.join(MODELS, 'system2_sos.json')) as f:
         cert = json.load(f, parse_float=Fraction)
     x1, x2 = sp.symbols('x1 x2')
@@ -24,7 +23,6 @@ def barrier():
 
 
 def expected_next(B, x1, x2, point):
-    """Exact E[B(x+)] at point during the attack, and the polynomial B(x+) in (xi, b)."""
     xi, b = sp.symbols('xi b')
     p1, p2 = (sp.Rational(v.numerator, v.denominator) for v in point)
     n1 = p1 - p2 / 50

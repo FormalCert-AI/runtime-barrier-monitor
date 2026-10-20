@@ -15,7 +15,6 @@ SYSTEMS = (('system1', 'System1 (valid)', 10, 0.5),
 
 
 def panel(ax, alarm_rate, title, top, width):
-    """Mirrored histograms (% of the initial states) of the rows of alarm_rate: Direct, DAB."""
     edges = np.arange(0, top + width, width)
     gap, zero_height = 0.25 * width, 0.9 * width
     ax.axhspan(100 * ALPHA, top, color=ALARM_BG, zorder=0)

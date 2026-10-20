@@ -25,7 +25,6 @@ def thresholds(ax, xmax):
 
 
 def panel(ax, B, T, shown, title, xmax=K_MAX):
-    """ln M_k of the runs `shown`; hollow marker: alarm with a = 1, filled: alarm with the default."""
     M = dab(B)
     lnM, tau1, tau = np.log(np.maximum(M[:, 1:], 1e-300)), alarm_times(M), alarm_times(M, A_DEFAULT)
     thresholds(ax, xmax)

@@ -7,14 +7,12 @@ BINS = 50
 
 
 def smooth(counts, width=2.0):
-    """Histogram counts smoothed with a Gaussian kernel (std `width` bins)."""
     x = np.arange(-4 * int(width), 4 * int(width) + 1)
     kernel = np.exp(-x ** 2 / (2 * width ** 2))
     return np.convolve(counts, kernel / kernel.sum(), mode='same')
 
 
 def zero_row(top=100):
-    """y-range of the row for p_hat_i = 0, below an axis that ends at top (%)."""
     return -0.09 * top, -0.02 * top
 
 
@@ -23,13 +21,11 @@ def _span(x, width, side):
 
 
 def draw(ax, x, centers, density, color, half_width, side='both'):
-    """Violin of `density` over `centers` at x; side 'left' or 'right' draws one half."""
     left, right = _span(x, half_width * density / density.max(), side)
     ax.fill_betweenx(centers, left, right, color=color, lw=0, zorder=2)
 
 
 def alarm_rates(ax, x, p, color, half_width, side='both', top=100):
-    """Violin of the rates p > 0 (%), width scaled by their share, and a bar in the zero row for the share of p = 0."""
     zero = np.mean(p == 0)
     if zero < 1:
         edges = np.linspace(0, top, BINS + 1)
@@ -45,7 +41,6 @@ def alarm_rates(ax, x, p, color, half_width, side='both', top=100):
 
 
 def alarm_axis(ax, label_alpha=True, top=100):
-    """y-axis in % up to top, with the zero row and the line alpha."""
     low, high = zero_row(top)
     margin = 0.01 * top
     ax.axhspan(low - margin, high + margin, color='#f6f6f6', zorder=0)
