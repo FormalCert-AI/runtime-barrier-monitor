@@ -16,7 +16,7 @@ def mlp(hidden):
 
 
 def load(net, weights, prefix):
-    net.load_state_dict({k[len(prefix) + 5:]: torch.tensor(weights[k]) for k in weights if k.startswith(f'{prefix}_net.')})
+    net.load_state_dict({k.split('.', 1)[1]: torch.tensor(weights[k]) for k in weights if k.startswith(f'{prefix}_net.')})
 
 
 def weights(barrier_net=None, policy_net=None, floor=None):

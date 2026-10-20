@@ -6,7 +6,7 @@ import numpy as np
 
 from .config import ALPHA, CAP, FRACTIONS, GAMMA
 
-B_MIN = 1e-12
+EPS = 1e-12                        # epsilon of Eq. (4); also guards the divisions by B_k
 
 
 def _wealth(factors):
@@ -15,16 +15,17 @@ def _wealth(factors):
 
 def direct(B):
     """lambda_k = 1 / B_k, i.e. M_k = B_k / B_0."""
-    return _wealth(1.0 + np.diff(B, axis=1) / np.maximum(B[:, :-1], B_MIN))
+    return _wealth(1.0 + np.diff(B, axis=1) / np.maximum(B[:, :-1], EPS))
 
 
 def dab(B, gamma=GAMMA, cap=CAP):
-    """DAB: lambda_k = min(max(S_k / Q_k, 0), cap, 1 / B_k), S_k and Q_k discounted sums of past increments and squares."""
+    """DAB: lambda_k = min(max(S_k / (Q_k + EPS), 0), cap, 1 / B_k), with S_k and Q_k the discounted sums of past
+    increments and of their squares."""
     R, K1 = B.shape
     lam = np.empty((R, K1 - 1))
     S, Q = np.zeros(R), np.zeros(R)
     for k in range(K1 - 1):
-        lam[:, k] = np.minimum(np.minimum(np.maximum(S / (Q + B_MIN), 0.0), cap), 1.0 / np.maximum(B[:, k], B_MIN))
+        lam[:, k] = np.minimum(np.minimum(np.maximum(S / (Q + EPS), 0.0), cap), 1.0 / np.maximum(B[:, k], EPS))
         d = B[:, k + 1] - B[:, k]
         S = gamma * S + d
         Q = gamma * Q + d * d
@@ -33,13 +34,13 @@ def dab(B, gamma=GAMMA, cap=CAP):
 
 def fraction_mixture(B, fractions=FRACTIONS):
     """Equal-weight mixture of lambda_k = c / B_k, c in fractions."""
-    relative = np.diff(B, axis=1) / np.maximum(B[:, :-1], B_MIN)
+    relative = np.diff(B, axis=1) / np.maximum(B[:, :-1], EPS)
     return np.mean([_wealth(1.0 + c * relative) for c in fractions], axis=0)
 
 
 def absolute_mixture(B, betas):
     """Equal-weight mixture of lambda_k = min(beta, 1 / B_k), beta in betas."""
-    d, largest = np.diff(B, axis=1), 1.0 / np.maximum(B[:, :-1], B_MIN)
+    d, largest = np.diff(B, axis=1), 1.0 / np.maximum(B[:, :-1], EPS)
     return np.mean([_wealth(1.0 + np.minimum(beta, largest) * d) for beta in betas], axis=0)
 
 

@@ -11,6 +11,7 @@ ALPHA = 0.05
 N_INIT = 1000                      # initial states
 N_RUNS = 1000                      # runs per initial state
 SEED = 2026
+VERSION = 2                        # bump when the simulation changes, so cached results are recomputed
 
 GAMMA = 0.92                       # DAB memory
 CAP = 100.0                        # DAB cap U

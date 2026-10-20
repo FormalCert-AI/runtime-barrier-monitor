@@ -1,9 +1,7 @@
 """Monte Carlo runs and the per-initial-state alarm rates."""
-import math
-
 import numpy as np
 
-from .config import (A_DEFAULT, A_VALUES, ABSOLUTE, CAP, DEFAULT_KMAX_LN_A, GAMMA, HORIZONS, K_EXT, K_MAX, LOGM_BINS,
+from .config import (A_DEFAULT, A_VALUES, ABSOLUTE, CAP, GAMMA, HORIZONS, K_EXT, K_MAX, LOGM_BINS,
                      LOGM_RANGE, LOGM_STEPS, SENS_CAP, SENS_GAMMA)
 from .monitors import absolute_mixture, alarm_times, dab, direct, fraction_mixture
 
@@ -35,18 +33,20 @@ def rollouts(system, barrier, x0, R, rng, record=False, extension=None):
     return B, T, (np.stack(path, 1) if record else None)
 
 
-def _rate(M, a, horizon=K_MAX):
-    return (alarm_times(M, a) <= horizon).mean()
+def _rate(M, a, T, horizon=K_MAX):
+    """Share of runs with an alarm by min(first exit, horizon), where monitoring stops."""
+    return (alarm_times(M[:, :horizon + 1], a) <= np.minimum(T, horizon)).mean()
 
 
 def evaluate(system, barrier, N, R, rng, extension_rng, run_rng=None):
     """N initial states (from rng) and R runs from each (from run_rng, default rng).
+    Each run is monitored until its first exit from S or the horizon (Remark 3).
 
     alarm_rate[m, j, i]  p_hat_i of monitor m (Direct, DAB) for K_max ln a = KMAX_LN_A[j]
     caught[m, j]         runs exiting by K_MAX with an alarm strictly before the first exit
     mixture_rate[b, i]   p_hat_i of the fixed-bet mixtures (default a)
-    logm_hist[m, s]      histogram of log10 M_k over all runs at k = LOGM_STEPS[s]
-    horizon_rate[m, h, i] p_hat_i for K_max = HORIZONS[h] at the default K_max ln a
+    logm_hist[m, s]      histogram of log10 M_k at k = LOGM_STEPS[s] over the runs still monitored at k
+    horizon_rate[m, h, i] p_hat_i for K_max = HORIZONS[h] with a = 1, so that only the horizon changes
     gamma_rate[g, i], cap_rate[u, i]  p_hat_i of DAB for SENS_GAMMA[g], SENS_CAP[u] (default a)"""
     X0 = system.sample_initial(N, rng)
     rng = run_rng or rng
@@ -62,22 +62,22 @@ def evaluate(system, barrier, N, R, rng, extension_rng, run_rng=None):
         unsafe = T <= K_MAX
         out['B0'][i], out['n_exit'][i] = B[0, 0], unsafe.sum()
         for g, gamma in enumerate(SENS_GAMMA):
-            out['gamma_rate'][g, i] = _rate(dab(B, gamma, CAP), A_DEFAULT)
+            out['gamma_rate'][g, i] = _rate(dab(B, gamma, CAP), A_DEFAULT, T)
         for u, cap in enumerate(SENS_CAP):
-            out['cap_rate'][u, i] = _rate(dab(B, GAMMA, cap), A_DEFAULT)
+            out['cap_rate'][u, i] = _rate(dab(B, GAMMA, cap), A_DEFAULT, T)
         for b, mixture in enumerate(MIXTURES.values()):
-            out['mixture_rate'][b, i] = _rate(mixture(B), A_DEFAULT)
+            out['mixture_rate'][b, i] = _rate(mixture(B), A_DEFAULT, T)
         for m, monitor in enumerate(MONITORS.values()):
             M_ext = monitor(B_ext)
             for h, horizon in enumerate(HORIZONS):
-                out['horizon_rate'][m, h, i] = _rate(M_ext[:, :horizon + 1], math.exp(DEFAULT_KMAX_LN_A / horizon), horizon)
+                out['horizon_rate'][m, h, i] = _rate(M_ext, 1.0, T_ext, horizon)
             M = M_ext[:, :K_MAX + 1]
             logM = np.clip(np.log10(np.maximum(M[:, list(LOGM_STEPS)], 1e-300)), *LOGM_RANGE)
-            for s in range(len(LOGM_STEPS)):
-                out['logm_hist'][m, s] += np.histogram(logM[:, s], bins=edges)[0]
+            for s, k in enumerate(LOGM_STEPS):
+                out['logm_hist'][m, s] += np.histogram(logM[T >= k, s], bins=edges)[0]
             for j, a in enumerate(A_VALUES):
                 tau = alarm_times(M, a)
-                out['alarm_rate'][m, j, i] = (tau <= K_MAX).mean()
+                out['alarm_rate'][m, j, i] = (tau <= np.minimum(T, K_MAX)).mean()
                 out['caught'][m, j] += (unsafe & (tau < T)).sum()
     return out
 

@@ -1,12 +1,11 @@
 """Figure style: serif fonts, DAB in blue, Direct in orange."""
 import os
 
-import matplotlib
+import matplotlib.pyplot as plt
 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt  # noqa: E402
+from core.config import RESULTS
 
-from core.config import RESULTS  # noqa: E402
+plt.switch_backend('Agg')
 
 DAB, DIRECT = '#2a78d6', '#eb6834'
 DAB_FILL, DIRECT_FILL = '#aac8ee', '#f7c7a9'

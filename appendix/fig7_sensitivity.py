@@ -1,4 +1,4 @@
-"""Figure 7: sensitivity to K_max, DAB memory gamma and cap U, varied one at a time."""
+"""Figure 7: sensitivity to K_max (with a = 1), DAB memory gamma and cap U (default a), varied one at a time."""
 import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
@@ -13,7 +13,7 @@ from plotting.style import DAB, DAB_FILL, DIRECT, DIRECT_FILL, WIDTH, legend_bel
 plt.rcParams['axes.titlepad'] = 4
 SYSTEMS = (('system1', 'System1 (valid)', 10), ('system2', 'System2 (valid)', 10),
            ('system2_input', 'System2 + input (invalid)', 100), ('system3', 'System3 (invalid)', 100))
-COLUMNS = (('horizon', HORIZONS, r'horizon $K_{\max}$', K_MAX),
+COLUMNS = (('horizon', HORIZONS, r'horizon $K_{\max}$ ($a=1$)', K_MAX),
            ('gamma', SENS_GAMMA, r'DAB memory $\gamma$', GAMMA),
            ('cap', SENS_CAP, r'DAB cap $U$', CAP))
 STYLE = {'direct': (DIRECT_FILL, DIRECT, 'left', '^'), 'dab': (DAB_FILL, DAB, 'right', 'o')}

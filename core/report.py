@@ -2,6 +2,7 @@
 import numpy as np
 
 from .config import ALPHA, DEFAULT_INDEX, KMAX_LN_A
+from .experiments import run
 from .simulate import MIXTURES, MONITORS
 
 
@@ -38,7 +39,6 @@ def pre_exit_alarm_rate(results, monitor, kmax_ln_a=KMAX_LN_A[DEFAULT_INDEX]):
 
 def table1(systems):
     """Rows of Table 1: rho_alpha and p_max of Direct and DAB for K_max ln a = 0 and the default."""
-    from .experiments import run
     rows = []
     for name, label in systems:
         results = run(name)

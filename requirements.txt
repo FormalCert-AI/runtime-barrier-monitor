@@ -1,5 +1,6 @@
-numpy
-scipy
-matplotlib
-sympy
-mpmath
+numpy==2.4.0
+scipy==1.16.0
+matplotlib==3.10.1
+sympy==1.13.1
+mpmath==1.3.0
+torch==2.5.1

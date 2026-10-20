@@ -39,8 +39,9 @@ FRESH_RUNS = {'system2_input_retrained', 'system3_retrained'}   # new noise, not
 def run(name, N=config.N_INIT, R=config.N_RUNS, seed=config.SEED):
     """Results of one experiment; simulated if not stored yet."""
     path = os.path.join(config.RESULTS, f'{name}.npz')
-    settings = dict(N=N, R=R, seed=seed, kmax_ln_a=np.array(config.KMAX_LN_A), horizons=np.array(config.HORIZONS),
-                    sens_gamma=np.array(config.SENS_GAMMA), sens_cap=np.array(config.SENS_CAP))
+    settings = dict(version=config.VERSION, N=N, R=R, seed=seed, kmax_ln_a=np.array(config.KMAX_LN_A),
+                    horizons=np.array(config.HORIZONS), sens_gamma=np.array(config.SENS_GAMMA),
+                    sens_cap=np.array(config.SENS_CAP))
     if os.path.exists(path):
         results = dict(np.load(path))
         if all(key in results and np.array_equal(results[key], value) for key, value in settings.items()):

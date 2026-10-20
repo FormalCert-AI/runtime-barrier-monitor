@@ -1,19 +1,19 @@
 """Policy/barrier retraining for System 3 (Section 4.4, Algorithm 1).
 
 Fit a dynamics model to monitored episodes, then retrain with one sampled successor per state (M = 1).
-Evaluate each update on fresh runs; stopping uses empirical DAB alarm rates.
+Stop when DAB raises no alarm above alpha on runs that are separate from the evaluation in Section 4.4.
 """
 import time
 
 import numpy as np
 import torch
 
-from core.config import A_DEFAULT, ALPHA, DEFAULT_INDEX, K_MAX, N_INIT, N_RUNS, SEED
+from core.config import A_DEFAULT, ALPHA, K_MAX, N_INIT, N_RUNS, SEED
 from core.experiments import model
 from core.models import NeuralBarrier, NeuralPolicy
 from core.monitors import alarm_times, dab
 from core.report import p_max, rho
-from core.simulate import evaluate, expected_barrier, visited_states
+from core.simulate import expected_barrier, rollouts, visited_states
 from core.systems import System3, _gauss_legendre
 from synthesis.common import augmented_lagrangian, load, mlp, save, weights
 
@@ -36,18 +36,21 @@ def collect(W, rng):
     for x0 in system.sample_initial(N_INIT, rng):
         x = np.repeat(x0[None], EPISODES_PER_STATE, 0)
         alive = np.ones(EPISODES_PER_STATE, bool)
+        exit_step = np.full(EPISODES_PER_STATE, K_MAX + 1)
         B, xs, us = [barrier(x)], [x], []
         for k in range(K_MAX):
             u = np.clip(system.policy(x) + rng.uniform(-DITHER, DITHER, len(x)), -1.5, 1.5)
             x1, x2 = x[:, 0], x[:, 1]
-            x_next = np.stack([x1 + 0.1 * x2, x2 + 0.1 * (x1 ** 3 / 3 - x1 - x2 + u)], 1) + 0.01 * rng.uniform(-1, 1, x.shape)
+            x_next = (np.stack([x1 + 0.1 * x2, x2 + 0.1 * (x1 ** 3 / 3 - x1 - x2 + u)], 1)
+                      + 0.01 * rng.uniform(-1, 1, x.shape))
             us.append(u)
             xs.append(x_next)
-            alive &= system.inside(x_next)
+            left = alive & ~system.inside(x_next)
+            exit_step[left] = k + 1
+            alive &= ~left
             B.append(np.where(alive, barrier(np.where(alive[:, None], x_next, x)), 1.0))
             x = np.where(alive[:, None], x_next, x)
         B, xs, us = np.stack(B, 1), np.stack(xs, 1), np.stack(us, 1)
-        exit_step = np.where((B == 1.0).any(1), (B == 1.0).argmax(1), K_MAX + 1)
         tau = alarm_times(dab(B), A_DEFAULT)
         for j in range(EPISODES_PER_STATE):
             n = min(int(tau[j]), int(exit_step[j]), K_MAX)
@@ -171,6 +174,17 @@ def resynthesise(start, net, sigma, rounds=(6000, 3000, 3000, 3000), lr=1e-3, fl
     return weights(barrier_net, policy_net, floor)
 
 
+def stopping_rates(W, rng=None):
+    """DAB alarm rates p_hat_i (default rule, stop at exit) on runs with their own seed."""
+    rng = rng or np.random.default_rng([SEED, 3])
+    system, barrier = closed_loop(W)
+    rates = []
+    for x0 in system.sample_initial(N_INIT, rng):
+        B, T, _ = rollouts(system, barrier, x0, N_RUNS, rng)
+        rates.append((alarm_times(dab(B), A_DEFAULT) <= np.minimum(T, K_MAX)).mean())
+    return np.array(rates)
+
+
 if __name__ == '__main__':
     start = time.time()
     W = dict(np.load(model('system3.npz')))
@@ -183,9 +197,7 @@ if __name__ == '__main__':
         joint = resynthesise(W, net, sigma)
         W = resynthesise(joint, net, sigma, rounds=(3000,), lr=5e-4, floor=0.01, train_policy=False)
         path = save('system3_retrained', W)
-        res = evaluate(*closed_loop(dict(np.load(path))), N_INIT, N_RUNS, np.random.default_rng(SEED),
-                       np.random.default_rng([SEED, 1]), np.random.default_rng([SEED, 2]))
-        p = res['alarm_rate'][1, DEFAULT_INDEX]
+        p = stopping_rates(dict(np.load(path)))
         print(f'  real system: DAB rho {rho(p):.2f}%, p_max {p_max(p):.2f}% ({time.time() - start:.0f} s)', flush=True)
         if rho(p) == 0 and p_max(p) <= 100 * ALPHA:
             break
